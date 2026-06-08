@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YoMeCepillo.cl - Demo</title>
+  <style>
+    :root{
+      --bg:#f6fbff;
+      --card:#ffffff;
+      --text:#123;
+      --muted:#607080;
+      --primary:#14b8a6;
+      --primary-dark:#0f766e;
+      --accent:#38bdf8;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --success:#22c55e;
+      --shadow:0 12px 30px rgba(14, 50, 80, .10);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#eefbff 0%,#f8fcff 48%,#f3fbfb 100%);
+    }
+    a{text-decoration:none;color:inherit}
+    .container{width:min(1160px, calc(100% - 32px)); margin:0 auto}
+    .nav{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(10px);
+      background:rgba(255,255,255,.75);
+      border-bottom:1px solid rgba(19,70,90,.08);
+    }
+    .nav-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px; padding:14px 0;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-.02em;
+    }
+    .brand-badge{
+      width:42px; height:42px; border-radius:14px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:grid; place-items:center; color:#fff; font-size:22px;
+      box-shadow:var(--shadow);
+    }
+    .nav-links{display:flex; gap:18px; flex-wrap:wrap; color:var(--muted); font-weight:600}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      padding:14px 18px; border-radius:999px; border:0; cursor:pointer;
+      font-weight:800; transition:.2s transform,.2s box-shadow,.2s opacity;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:var(--shadow)}
+    .btn-light{background:#fff; color:var(--primary-dark); border:1px solid rgba(15,118,110,.12)}
+    .hero{
+      padding:62px 0 28px;
+    }
+    .hero-grid{
+      display:grid; grid-template-columns:1.1fr .9fr; gap:28px; align-items:center;
+    }
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:8px;
+      background:rgba(20,184,166,.10); color:var(--primary-dark);
+      padding:8px 12px; border-radius:999px; font-size:14px; font-weight:800;
+    }
+    h1{
+      font-size:clamp(2.1rem, 6vw, 4.3rem);
+      line-height:.97; letter-spacing:-.045em; margin:14px 0 16px;
+    }
+    .lead{
+      font-size:1.08rem; color:var(--muted); line-height:1.6; max-width:62ch;
+    }
+    .hero-actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:24px}
+    .hero-card{
+      background:var(--card); border-radius:32px; box-shadow:var(--shadow);
+      padding:24px; position:relative; overflow:hidden; border:1px solid rgba(20,184,166,.10);
+    }
+    .blob{
+      position:absolute; inset:auto -40px -55px auto; width:180px; height:180px; border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, rgba(56,189,248,.40), rgba(20,184,166,.10) 58%, transparent 62%);
+    }
+    .phone{
+      background:linear-gradient(180deg,#0f172a,#111827);
+      border-radius:28px; padding:12px; width:min(100%,360px); margin:0 auto;
+      box-shadow:0 22px 50px rgba(2,10,20,.28);
+    }
+    .screen{
+      background:linear-gradient(180deg,#ecfeff 0%,#ffffff 100%);
+      border-radius:20px; padding:16px;
+    }
+    .stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px}
+    .mini{
+      padding:14px; border-radius:18px; background:#fff; box-shadow:var(--shadow); border:1px solid rgba(15,118,110,.08)
+    }
+    .mini h4,.mini p{margin:0}
+    .mini h4{font-size:1.1rem}
+    .score-ring{
+      width:116px; height:116px; margin:10px auto 12px;
+      border-radius:50%;
+      background:conic-gradient(var(--success) 0 72%, #dbeafe 72% 100%);
+      display:grid; place-items:center;
+    }
+    .score-ring > div{
+      width:82px; height:82px; background:#fff; border-radius:50%;
+      display:grid; place-items:center; font-weight:900; font-size:1.4rem;
+    }
+    section{padding:22px 0 8px}
+    .section-title{
+      font-size:clamp(1.5rem, 3vw, 2.3rem); letter-spacing:-.03em; margin:0 0 10px;
+    }
+    .section-lead{color:var(--muted); margin:0 0 22px; max-width:70ch; line-height:1.65}
+    .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+    .card{
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:22px; border:1px solid rgba(15,118,110,.08)
+    }
+    .card-icon{
+      width:46px; height:46px; display:grid; place-items:center; border-radius:14px;
+      background:rgba(20,184,166,.12); font-size:22px; margin-bottom:12px;
+    }
+    .card h3{margin:0 0 8px; font-size:1.08rem}
+    .card p{margin:0; color:var(--muted); line-height:1.6}
+    .learn{
+      display:grid; grid-template-columns:1fr 1fr; gap:18px;
+    }
+    .step{
+      display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px dashed rgba(96,112,128,.25)
+    }
+    .step:last-child{border-bottom:0}
+    .step-num{
+      min-width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+      font-weight:900; color:#fff; background:linear-gradient(135deg,var(--accent),var(--primary));
+    }
+    .quiz-wrap{
+      display:grid; grid-template-columns:1fr .95fr; gap:18px; align-items:start;
+    }
+    form .q{margin-bottom:18px}
+    label.block{display:block; font-weight:800; margin-bottom:8px}
+    .options{display:grid; gap:8px}
+    .option{
+      display:flex; gap:10px; align-items:center; background:#f9fcff;
+      border:1px solid rgba(15,118,110,.10); padding:12px 14px; border-radius:16px;
+    }
+    input[type=radio]{accent-color:var(--primary-dark)}
+    .result-card{
+      position:sticky; top:88px;
+      background:linear-gradient(180deg,#ffffff,#f6fffd);
+    }
+    .pill{
+      display:inline-flex; padding:7px 10px; border-radius:999px; font-weight:800; font-size:13px;
+      background:rgba(34,197,94,.12); color:#15803d;
+    }
+    .bar{
+      width:100%; height:12px; border-radius:999px; background:#eaf2f7; overflow:hidden; margin:10px 0 18px;
+    }
+    .bar>span{
+      display:block; height:100%; width:0%;
+      background:linear-gradient(90deg,var(--accent),var(--primary));
+      transition:width .35s ease;
+    }
+    .score-large{font-size:2.7rem; font-weight:900; letter-spacing:-.04em; margin:.1rem 0}
+    .list{margin:12px 0 0; padding-left:18px; color:var(--muted)}
+    .list li{margin:8px 0}
+    .dashboard{
+      display:grid; grid-template-columns:1.1fr .9fr; gap:18px;
+    }
+    .chart{
+      height:240px; background:
+        linear-gradient(to top, rgba(20,184,166,.06), rgba(20,184,166,0)),
+        repeating-linear-gradient(to top, #eef4f8 0 1px, transparent 1px 48px);
+      border-radius:22px; position:relative; overflow:hidden; border:1px solid rgba(15,118,110,.08)
+    }
+    .line{
+      position:absolute; inset:0;
+    }
+    .line svg{width:100%; height:100%}
+    .checklist .item{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 0; border-bottom:1px dashed rgba(96,112,128,.24)
+    }
+    .checklist .item:last-child{border-bottom:0}
+    .tag{
+      padding:6px 10px; border-radius:999px; font-size:12px; font-weight:900;
+      background:#eff6ff; color:#2563eb;
+    }
+    footer{
+      padding:44px 0 60px; color:var(--muted); text-align:center;
+    }
+    @media (max-width: 980px){
+      .hero-grid,.cards,.learn,.quiz-wrap,.dashboard{grid-template-columns:1fr}
+      .result-card{position:relative; top:0}
+    }
+    @media (max-width: 700px){
+      .nav-links{display:none}
+      .stat-grid{grid-template-columns:1fr}
+      .container{width:min(100% - 22px, 1160px)}
+      h1{line-height:1.02}
+      .hero{padding-top:34px}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="container nav-inner">
+      <div class="brand">
+        <div class="brand-badge">🦷</div>
+        <div>
+          <div>YoMeCepillo.cl</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Demo base del proyecto</div>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="#aprende">Aprende</a>
+        <a href="#evaluacion">Evaluación</a>
+        <a href="#resultados">Resultados</a>
+        <a href="#seguimiento">Seguimiento</a>
+      </div>
+      <a class="btn btn-primary" href="#evaluacion">Probar demo</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Proyecto de tesis · higiene oral preventiva</span>
+        <h1>Aprende a cepillarte mejor y valida tus avances de higiene oral.</h1>
+        <p class="lead">
+          Una plataforma educativa para enseñar el uso correcto del cepillo dental y los cepillos interdentales,
+          con autoevaluación, recomendaciones personalizadas y seguimiento visual de progreso.
+        </p>
+        <div class="hero-actions">
+          <a href="#evaluacion" class="btn btn-primary">Evaluar mi higiene</a>
+          <a href="#aprende" class="btn btn-light">Ver instructivos</a>
+        </div>
+
+        <div class="stat-grid">
+          <div class="mini">
+            <p style="color:var(--muted);font-weight:700">Módulo 1</p>
+            <h4>Aprendizaje visual</h4>
+          </div>
+          <div class="mini">
+            <p style="color:var(--muted);font-weight:700">Módulo 2</p>
+            <h4>Autoevaluación</h4>
+          </div>
+          <div class="mini">
+            <p style="color:var(--muted);font-weight:700">Módulo 3</p>
+            <h4>Seguimiento</h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="blob"></div>
+        <div class="phone">
+          <div class="screen">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong>Mi avance semanal</strong>
+              <span class="pill">Activo</span>
+            </div>
+            <div class="score-ring"><div>72%</div></div>
+            <div style="text-align:center;font-weight:800;margin-bottom:12px">Nivel intermedio</div>
+            <div class="bar"><span style="width:72%"></span></div>
+            <div style="display:grid;gap:10px">
+              <div class="option">✅ Cepillado 2 veces al día</div>
+              <div class="option">⚠️ Uso interdental irregular</div>
+              <div class="option">✅ Limpieza de lengua</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="container">
+      <h2 class="section-title">¿Qué hace esta web?</h2>
+      <p class="section-lead">
+        Esta demo te muestra cómo podría verse la versión base de <strong>YoMeCepillo.cl</strong>:
+        un sitio pensado para educación, evaluación de hábitos y visualización de progreso.
+      </p>
+      <div class="cards">
+        <article class="card">
+          <div class="card-icon">📘</div>
+          <h3>Enseña con claridad</h3>
+          <p>Explica la técnica correcta del cepillado y del uso de cepillos interdentales con lenguaje simple e interfaz amigable.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🧪</div>
+          <h3>Evalúa hábitos</h3>
+          <p>El usuario responde preguntas clave y obtiene un puntaje con observaciones y recomendaciones personalizadas.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">📈</div>
+          <h3>Permite seguimiento</h3>
+          <p>Visualiza avances, mantiene rutinas y convierte la higiene oral en una práctica medible y más consciente.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="aprende">
+    <div class="container">
+      <h2 class="section-title">Instructivos base del proyecto</h2>
+      <p class="section-lead">Aquí iría el contenido educativo principal. Lo dejé en formato visual, como lo vería un usuario dentro de la plataforma.</p>
+      <div class="learn">
+        <div class="card">
+          <h3 style="font-size:1.25rem;margin-top:0">🪥 Cómo usar correctamente el cepillo dental</h3>
+          <div class="step"><div class="step-num">1</div><div><strong>Inclina el cepillo a 45°.</strong><br><span style="color:var(--muted)">Dirígelo suavemente hacia la línea de la encía.</span></div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Haz movimientos suaves.</strong><br><span style="color:var(--muted)">Evita cepillar con fuerza o de forma brusca.</span></div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>Cepilla todas las caras.</strong><br><span style="color:var(--muted)">Exterior, interior y superficies de masticación.</span></div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>Dedica al menos 2 minutos.</strong><br><span style="color:var(--muted)">La constancia es más importante que la fuerza.</span></div></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:1.25rem;margin-top:0">🧩 Cómo usar cepillos interdentales</h3>
+          <div class="step"><div class="step-num">1</div><div><strong>Elige el tamaño correcto.</strong><br><span style="color:var(--muted)">No debe entrar forzado ni quedar demasiado suelto.</span></div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Inserta con suavidad.</strong><br><span style="color:var(--muted)">Hazlo entre los espacios dentales, sin dañar la encía.</span></div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>Mueve hacia adentro y afuera.</strong><br><span style="color:var(--muted)">Con movimientos cortos y controlados.</span></div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>Úsalo de forma complementaria.</strong><br><span style="color:var(--muted)">No reemplaza el cepillado, lo potencia.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="evaluacion">
+    <div class="container">
+      <h2 class="section-title">Autoevaluación de higiene oral</h2>
+      <p class="section-lead">Esta sección simula el formulario central del proyecto. Responde y verás cómo la interfaz entrega un resultado automático.</p>
+      <div class="quiz-wrap">
+        <div class="card">
+          <form id="quizForm">
+            <div class="q">
+              <label class="block">1. ¿Cuántas veces te cepillas al día?</label>
+              <div class="options">
+                <label class="option"><input type="radio" name="q1" value="2" checked> Una vez o menos</label>
+                <label class="option"><input type="radio" name="q1" value="4"> Dos veces</label>
+                <label class="option"><input type="radio" name="q1" value="5"> Tres o más veces</label>
+              </div>
+            </div>
+            <div class="q">
+              <label class="block">2. ¿Cuánto tiempo te cepillas?</label>
+              <div class="options">
+                <label class="option"><input type="radio" name="q2" value="2" checked> Menos de 1 minuto</label>
+                <label class="option"><input type="radio" name="q2" value="4"> 1 a 2 minutos</label>
+                <label class="option"><input type="radio" name="q2" value="5"> 2 minutos o más</label>
+              </div>
+            </div>
+            <div class="q">
+              <label class="block">3. ¿Usas cepillos interdentales o hilo dental?</label>
+              <div class="options">
+                <label class="option"><input type="radio" name="q3" value="1" checked> Nunca</label>
+                <label class="option"><input type="radio" name="q3" value="3"> A veces</label>
+                <label class="option"><input type="radio" name="q3" value="5"> Sí, de forma frecuente</label>
+              </div>
+            </div>
+            <div class="q">
+              <label class="block">4. ¿Te sangran las encías al cepillarte?</label>
+              <div class="options">
+                <label class="option"><input type="radio" name="q4" value="1" checked> Sí, frecuentemente</label>
+                <label class="option"><input type="radio" name="q4" value="3"> A veces</label>
+                <label class="option"><input type="radio" name="q4" value="5"> No</label>
+              </div>
+            </div>
+            <div class="q">
+              <label class="block">5. ¿Limpias tu lengua dentro de tu rutina?</label>
+              <div class="options">
+                <label class="option"><input type="radio" name="q5" value="1" checked> No</label>
+                <label class="option"><input type="radio" name="q5" value="3"> A veces</label>
+                <label class="option"><input type="radio" name="q5" value="5"> Sí</label>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="calculateScore()">Ver mi resultado</button>
+          </form>
+        </div>
+
+        <aside class="card result-card" id="resultados">
+          <span class="pill" id="levelPill">Resultado base</span>
+          <div class="score-large" id="scoreText">52%</div>
+          <div style="font-weight:800;font-size:1.1rem" id="levelText">Nivel inicial</div>
+          <div class="bar"><span id="barFill" style="width:52%"></span></div>
+          <p id="summary" style="color:var(--muted);line-height:1.65;margin-top:0">
+            Tu rutina necesita mayor constancia y refuerzo en higiene interdental. Esta tarjeta podría convertirse en una infografía personalizada.
+          </p>
+          <strong>Recomendaciones</strong>
+          <ul class="list" id="recs">
+            <li>Intenta llegar a 2 minutos por cepillado.</li>
+            <li>Incorpora limpieza de lengua a diario.</li>
+            <li>Empieza con cepillos interdentales o hilo dental.</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="seguimiento">
+    <div class="container">
+      <h2 class="section-title">Panel de seguimiento visual</h2>
+      <p class="section-lead">Este módulo representa cómo podrías validar avances dentro de la tesis: progreso semanal, hábitos cumplidos y metas simples.</p>
+
+      <div class="dashboard">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+              <strong style="font-size:1.1rem">Evolución de puntaje</strong>
+              <div style="color:var(--muted)">Ejemplo de mejora en 4 semanas</div>
+            </div>
+            <span class="tag">Seguimiento</span>
+          </div>
+          <div class="chart">
+            <div class="line">
+              <svg viewBox="0 0 600 240" preserveAspectRatio="none" aria-hidden="true">
+                <polyline fill="rgba(20,184,166,.12)" stroke="none"
+                  points="40,190 160,165 280,135 400,105 520,78 520,240 40,240"></polyline>
+                <polyline fill="none" stroke="rgba(15,118,110,1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+                  points="40,190 160,165 280,135 400,105 520,78"></polyline>
+                <circle cx="40" cy="190" r="7" fill="rgba(15,118,110,1)"></circle>
+                <circle cx="160" cy="165" r="7" fill="rgba(15,118,110,1)"></circle>
+                <circle cx="280" cy="135" r="7" fill="rgba(15,118,110,1)"></circle>
+                <circle cx="400" cy="105" r="7" fill="rgba(15,118,110,1)"></circle>
+                <circle cx="520" cy="78" r="7" fill="rgba(15,118,110,1)"></circle>
+                <text x="24" y="215" font-size="14" fill="#607080">Sem 1</text>
+                <text x="144" y="215" font-size="14" fill="#607080">Sem 2</text>
+                <text x="264" y="215" font-size="14" fill="#607080">Sem 3</text>
+                <text x="384" y="215" font-size="14" fill="#607080">Sem 4</text>
+                <text x="504" y="215" font-size="14" fill="#607080">Hoy</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="card checklist">
+          <strong style="font-size:1.1rem">Checklist diario</strong>
+          <div style="color:var(--muted);margin-bottom:10px">Ejemplo de hábitos que el usuario podría marcar</div>
+          <div class="item"><span>Cepillado mañana</span><span class="tag">Cumplido</span></div>
+          <div class="item"><span>Cepillado noche</span><span class="tag">Cumplido</span></div>
+          <div class="item"><span>Limpieza interdental</span><span class="tag">Pendiente</span></div>
+          <div class="item"><span>Limpieza de lengua</span><span class="tag">Cumplido</span></div>
+          <div class="item"><span>Tiempo de 2 minutos</span><span class="tag">En progreso</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      Demo conceptual creada para visualizar la base del proyecto <strong>YoMeCepillo.cl</strong>.<br>
+      Pensada como apoyo para tesis, validación de hábitos e interfaz educativa de higiene oral.
+    </div>
+  </footer>
+
+  <script>
+    function calculateScore(){
+      const form = document.getElementById('quizForm');
+      const values = ['q1','q2','q3','q4','q5'].map(name => {
+        const checked = form.querySelector(`input[name="${name}"]:checked`);
+        return Number(checked ? checked.value : 0);
+      });
+
+      const total = values.reduce((a,b)=>a+b,0);
+      const max = 25;
+      const pct = Math.round((total/max)*100);
+
+      let level = 'Nivel inicial';
+      let pill = 'Inicio';
+      let summary = 'Tu rutina necesita reforzar frecuencia, técnica y limpieza complementaria para acercarte a una higiene oral más completa.';
+      let recs = [
+        'Aumenta el tiempo de cepillado a 2 minutos.',
+        'Suma limpieza interdental a tu rutina.',
+        'Observa si existe sangrado frecuente y considera evaluación profesional.'
+      ];
+
+      if (pct >= 80){
+        level = 'Nivel avanzado';
+        pill = 'Muy buen hábito';
+        summary = 'Tienes una base sólida de higiene oral. La plataforma puede ayudarte a mantener constancia, corregir detalles y visualizar progreso.';
+        recs = [
+          'Mantén la frecuencia y técnica del cepillado.',
+          'Continúa con higiene interdental de forma constante.',
+          'Renueva tu cepillo periódicamente y refuerza controles preventivos.'
+        ];
+      } else if (pct >= 60){
+        level = 'Nivel intermedio';
+        pill = 'Buen camino';
+        summary = 'Tu rutina muestra avances, pero todavía hay oportunidades de mejora, especialmente en consistencia y limpieza interdental.';
+        recs = [
+          'Vuelve más regular el uso de higiene interdental.',
+          'Asegura una técnica suave y ordenada.',
+          'Fortalece los hábitos diarios con checklist o recordatorios.'
+        ];
+      }
+
+      document.getElementById('scoreText').textContent = pct + '%';
+      document.getElementById('levelText').textContent = level;
+      document.getElementById('levelPill').textContent = pill;
+      document.getElementById('summary').textContent = summary;
+      document.getElementById('barFill').style.width = pct + '%';
+
+      const ul = document.getElementById('recs');
+      ul.innerHTML = '';
+      recs.forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        ul.appendChild(li);
+      });
+
+      document.getElementById('resultados').scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+  </script>
+</body>
+</html>

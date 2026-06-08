@@ -1,250 +1,151 @@
 "use client";
 
 import Image from "next/image";
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type ToolId = "guia" | "evaluacion" | "nivel" | "dashboard";
-type AnswerMap = Record<number, number>;
+type Screen = "home" | "brush" | "floss" | "habits" | "progress" | "learn" | "profile";
+type HabitKey = "brushMorning" | "brushNight" | "floss" | "tongue" | "water";
 
-const features: Array<{
-  id: ToolId;
-  title: string;
-  body: string;
-  accent: string;
-  visual: string;
-  action: string;
-}> = [
+const habitLabels: Record<HabitKey, string> = {
+  brushMorning: "Cepillado manana",
+  brushNight: "Cepillado noche",
+  floss: "Hilo dental",
+  tongue: "Lengua limpia",
+  water: "Tomar agua",
+};
+
+const habitKeys = Object.keys(habitLabels) as HabitKey[];
+
+const lessonCards = [
   {
-    id: "guia",
-    title: "Aprende a Cepillarte",
-    body: "Conoce la tecnica correcta para cepillar tus dientes como un experto.",
+    title: "Errores comunes al cepillarse",
+    time: "2:45 min",
+    tag: "Cepillado",
     accent: "blue",
-    visual: "brush",
-    action: "Ver tecnica",
   },
   {
-    id: "evaluacion",
-    title: "Haz tu Evaluacion",
-    body: "Responde preguntas entretenidas para saber que tan bien te cepillas.",
-    accent: "pink",
-    visual: "check",
-    action: "Responder",
-  },
-  {
-    id: "nivel",
-    title: "Descubre Tu Nivel",
-    body: "Recibe un reporte de higiene dental y conoce si eres inicial, medio o avanzado.",
+    title: "Por que usar hilo dental?",
+    time: "1:58 min",
+    tag: "Hilo dental",
     accent: "mint",
-    visual: "chart",
-    action: "Ver nivel",
   },
   {
-    id: "dashboard",
-    title: "Mejora Tu Puntuacion",
-    body: "Sigue tus progresos, mejora tus habitos y sube de nivel.",
+    title: "Como prevenir la gingivitis",
+    time: "2:12 min",
+    tag: "Encias",
+    accent: "pink",
+  },
+  {
+    title: "Caries entre los dientes",
+    time: "2:30 min",
+    tag: "Cuidados",
     accent: "yellow",
-    visual: "score",
-    action: "Mi racha",
   },
 ];
 
-const navItems = [
-  { label: "Inicio", href: "#inicio" },
-  { label: "Guia de Cepillado", href: "#plataforma", tool: "guia" as ToolId },
-  { label: "Dashboard", href: "#plataforma", tool: "dashboard" as ToolId },
-  { label: "Contacto", href: "#contacto" },
-];
-
-const brushingSteps = [
-  {
-    title: "Prepara tu cepillo",
-    time: "10 seg",
-    body: "Usa una cantidad pequena de pasta con fluor, del porte de una arveja.",
-  },
-  {
-    title: "Cepilla por fuera",
-    time: "40 seg",
-    body: "Inclina el cepillo y haz movimientos suaves desde la encia hacia el diente.",
-  },
-  {
-    title: "Cepilla por dentro",
-    time: "40 seg",
-    body: "Repite por la cara interna de los dientes, sin apurarte ni presionar fuerte.",
-  },
-  {
-    title: "Muelas y lengua",
-    time: "30 seg",
-    body: "Limpia las superficies donde masticas y termina cepillando suavemente la lengua.",
-  },
-  {
-    title: "Enjuague y sonrisa",
-    time: "20 seg",
-    body: "Escupe la espuma, limpia el cepillo y deja tu kit listo para la proxima mision.",
-  },
-];
-
-const quizQuestions = [
-  {
-    question: "Cuantas veces al dia deberias cepillarte?",
-    options: ["Solo cuando me acuerdo", "2 veces o mas", "Una vez a la semana"],
-    correct: 1,
-  },
-  {
-    question: "Cuanto tiempo debe durar un buen cepillado?",
-    options: ["20 segundos", "2 minutos", "10 minutos"],
-    correct: 1,
-  },
-  {
-    question: "Que movimiento cuida mejor las encias?",
-    options: ["Fuerte de lado a lado", "Suave desde la encia al diente", "Solo morder el cepillo"],
-    correct: 1,
-  },
-  {
-    question: "Que zona se suele olvidar?",
-    options: ["La lengua", "El pelo", "Las orejas"],
-    correct: 0,
-  },
-  {
-    question: "Cuando conviene cambiar el cepillo?",
-    options: ["Cuando las cerdas estan abiertas", "Nunca", "Cada 5 anos"],
-    correct: 0,
-  },
-];
-
-const dailyTasks = [
-  "Cepillado de la manana",
-  "Cepillado de la noche",
-  "Cepille la lengua",
-  "Use hilo dental o pedi ayuda",
-  "Tome agua y evite dulces pegajosos",
-];
-
-const emptyAnswers: AnswerMap = {};
+const habitQuestion = {
+  question: "Con que frecuencia usas hilo dental?",
+  options: ["Nunca", "Algunas veces a la semana", "Casi todos los dias", "Todos los dias"],
+};
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function getLevel(score: number) {
-  if (score >= 80) {
-    return {
-      name: "Experto Ceps",
-      badge: "Nivel avanzado",
-      className: "advanced",
-      message: "Tu tecnica esta muy bien encaminada. Mantente constante y cuida tu racha.",
-      daily: [
-        "Cepillate manana y noche por 2 minutos.",
-        "Usa hilo dental con ayuda si lo necesitas.",
-        "Revisa que no queden zonas sin limpiar.",
-      ],
-    };
-  }
-
-  if (score >= 50) {
-    return {
-      name: "Explorador Dental",
-      badge: "Nivel medio",
-      className: "medium",
-      message: "Vas bien. El siguiente paso es ordenar tu rutina y no saltarte la noche.",
-      daily: [
-        "Practica la tecnica por secciones.",
-        "Usa un temporizador de 2 minutos.",
-        "Marca tu progreso todos los dias.",
-      ],
-    };
-  }
-
+function emptyHabits(): Record<HabitKey, boolean> {
   return {
-    name: "Aprendiz Sonrisa",
-    badge: "Nivel inicial",
-    className: "starter",
-    message: "Estas partiendo. Lo importante es aprender el orden y repetirlo cada dia.",
-    daily: [
-      "Mira la guia antes de cepillarte.",
-      "Pide ayuda para llegar a las muelas.",
-      "Completa una mision diaria sin apuro.",
-    ],
+    brushMorning: false,
+    brushNight: false,
+    floss: false,
+    tongue: false,
+    water: false,
   };
 }
 
-function calculateScore(nextAnswers: AnswerMap) {
-  const correct = quizQuestions.reduce((total, item, index) => {
-    return total + (nextAnswers[index] === item.correct ? 1 : 0);
-  }, 0);
-
-  return Math.round((correct / quizQuestions.length) * 100);
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const rest = String(seconds % 60).padStart(2, "0");
+  return `${minutes}:${rest}`;
 }
 
 export default function Home() {
-  const [activeTool, setActiveTool] = useState<ToolId>("guia");
-  const [guideStep, setGuideStep] = useState(0);
-  const [answers, setAnswers] = useState<AnswerMap>(emptyAnswers);
-  const [savedScore, setSavedScore] = useState(0);
-  const [checkedTasks, setCheckedTasks] = useState<boolean[]>(() => dailyTasks.map(() => false));
+  const [screen, setScreen] = useState<Screen>("home");
+  const [habits, setHabits] = useState<Record<HabitKey, boolean>>(emptyHabits);
   const [streak, setStreak] = useState(0);
   const [lastCompleted, setLastCompleted] = useState("");
+  const [habitAnswer, setHabitAnswer] = useState(3);
+  const [brushingSeconds, setBrushingSeconds] = useState(120);
+  const [isBrushing, setIsBrushing] = useState(false);
+  const [flossDone, setFlossDone] = useState(false);
 
-  const quizDone = Object.keys(answers).length === quizQuestions.length;
-  const currentScore = useMemo(() => calculateScore(answers), [answers]);
+  const completedHabits = habitKeys.filter((key) => habits[key]).length;
+  const hygieneScore = Math.round((completedHabits / habitKeys.length) * 100);
+  const allHabitsDone = completedHabits === habitKeys.length;
+  const brushingSegment = Math.min(3, Math.floor((120 - brushingSeconds) / 30));
 
-  const score = quizDone ? currentScore : savedScore;
-  const level = getLevel(score);
-  const completedCount = checkedTasks.filter(Boolean).length;
-  const progress = Math.round((completedCount / dailyTasks.length) * 100);
-  const allDoneToday = completedCount === dailyTasks.length;
+  const weeklyScore = useMemo(() => {
+    const answerBoost = [0, 12, 22, 30][habitAnswer];
+    return Math.min(100, 52 + completedHabits * 6 + answerBoost);
+  }, [completedHabits, habitAnswer]);
 
   useEffect(() => {
     window.setTimeout(() => {
-      const storedScore = Number(localStorage.getItem("ymc-score") || "0");
-      const storedStreak = Number(localStorage.getItem("ymc-streak") || "0");
-      const storedLastCompleted = localStorage.getItem("ymc-last-completed") || "";
-      const storedDay = localStorage.getItem(`ymc-day-${todayKey()}`);
+      const storedHabits = localStorage.getItem(`ymc-app-day-${todayKey()}`);
+      const storedStreak = Number(localStorage.getItem("ymc-app-streak") || "0");
+      const storedLastCompleted = localStorage.getItem("ymc-app-last-completed") || "";
+      const storedHabitAnswer = Number(localStorage.getItem("ymc-app-habit-answer") || "3");
 
-      setSavedScore(storedScore);
+      if (storedHabits) {
+        setHabits(JSON.parse(storedHabits) as Record<HabitKey, boolean>);
+      }
+
       setStreak(storedStreak);
       setLastCompleted(storedLastCompleted);
-
-      if (storedDay) {
-        setCheckedTasks(JSON.parse(storedDay) as boolean[]);
-      }
+      setHabitAnswer(storedHabitAnswer);
+      setFlossDone(storedHabits ? JSON.parse(storedHabits).floss : false);
     }, 0);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(`ymc-day-${todayKey()}`, JSON.stringify(checkedTasks));
-  }, [checkedTasks]);
+    localStorage.setItem(`ymc-app-day-${todayKey()}`, JSON.stringify(habits));
+  }, [habits]);
 
-  function openTool(tool: ToolId) {
-    setActiveTool(tool);
-    requestAnimationFrame(() => {
-      document.getElementById("plataforma")?.scrollIntoView({ behavior: "smooth" });
-    });
+  useEffect(() => {
+    localStorage.setItem("ymc-app-habit-answer", String(habitAnswer));
+  }, [habitAnswer]);
+
+  useEffect(() => {
+    if (!isBrushing || brushingSeconds <= 0) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setBrushingSeconds((current) => Math.max(current - 1, 0));
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [brushingSeconds, isBrushing]);
+
+  useEffect(() => {
+    if (brushingSeconds === 0) {
+      setIsBrushing(false);
+      setHabits((current) => ({ ...current, brushMorning: true, brushNight: true }));
+    }
+  }, [brushingSeconds]);
+
+  function updateHabit(key: HabitKey, value = !habits[key]) {
+    setHabits((current) => ({ ...current, [key]: value }));
   }
 
-  function toggleTask(index: number) {
-    setCheckedTasks((current) =>
-      current.map((checked, itemIndex) => (itemIndex === index ? !checked : checked)),
-    );
-  }
-
-  function answerQuestion(questionIndex: number, optionIndex: number) {
-    setAnswers((current) => {
-      const nextAnswers = { ...current, [questionIndex]: optionIndex };
-
-      if (Object.keys(nextAnswers).length === quizQuestions.length) {
-        const nextScore = calculateScore(nextAnswers);
-        setSavedScore(nextScore);
-        localStorage.setItem("ymc-score", String(nextScore));
-      }
-
-      return nextAnswers;
-    });
+  function registerFloss() {
+    setFlossDone(true);
+    updateHabit("floss", true);
   }
 
   function completeDay() {
     const today = todayKey();
 
-    if (!allDoneToday || lastCompleted === today) {
+    if (!allHabitsDone || lastCompleted === today) {
       return;
     }
 
@@ -255,331 +156,491 @@ export default function Home() {
 
     setStreak(nextStreak);
     setLastCompleted(today);
-    localStorage.setItem("ymc-streak", String(nextStreak));
-    localStorage.setItem("ymc-last-completed", today);
+    localStorage.setItem("ymc-app-streak", String(nextStreak));
+    localStorage.setItem("ymc-app-last-completed", today);
   }
 
-  function resetToday() {
-    setCheckedTasks(dailyTasks.map(() => false));
+  function resetBrushTimer() {
+    setBrushingSeconds(120);
+    setIsBrushing(false);
   }
 
   return (
-    <main className="site-shell" id="inicio">
-      <header className="topbar" aria-label="Navegacion principal">
-        <a className="brand" href="#inicio">
-          <Image
-            src="/logo.png"
-            alt="YoMeCepillo.cl"
-            width={360}
-            height={152}
-            priority
-          />
-        </a>
+    <main className="app-page">
+      <div className="phone-frame">
+        <section className={`app-screen ${screen === "brush" ? "full-focus" : ""}`}>
+          <StatusBar />
 
-        <nav className="nav-links">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              className={
-                item.tool === activeTool || (item.label === "Inicio" && activeTool === "guia")
-                  ? "active"
-                  : ""
-              }
-              href={item.href}
-              onClick={() => item.tool && setActiveTool(item.tool)}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+          {screen !== "home" && (
+            <button className="back-button" onClick={() => setScreen("home")} type="button">
+              Atrás
+            </button>
+          )}
 
-        <button className="pill-button top-cta" onClick={() => openTool("guia")} type="button">
-          Empezar Guia
-          <span aria-hidden="true">&rsaquo;</span>
+          {screen === "home" && (
+            <HomeScreen
+              hygieneScore={hygieneScore}
+              habits={habits}
+              streak={streak}
+              setScreen={setScreen}
+              completeDay={completeDay}
+              lastCompleted={lastCompleted}
+              allHabitsDone={allHabitsDone}
+            />
+          )}
+
+          {screen === "brush" && (
+            <BrushScreen
+              seconds={brushingSeconds}
+              isRunning={isBrushing}
+              segment={brushingSegment}
+              onToggle={() => setIsBrushing((current) => !current)}
+              onReset={resetBrushTimer}
+            />
+          )}
+
+          {screen === "floss" && <FlossScreen flossDone={flossDone} onDone={registerFloss} />}
+
+          {screen === "habits" && (
+            <HabitsScreen
+              answer={habitAnswer}
+              onAnswer={setHabitAnswer}
+              onNext={() => setScreen("progress")}
+            />
+          )}
+
+          {screen === "progress" && (
+            <ProgressScreen
+              weeklyScore={weeklyScore}
+              streak={streak}
+              habits={habits}
+              setScreen={setScreen}
+            />
+          )}
+
+          {screen === "learn" && <LearnScreen />}
+
+          {screen === "profile" && (
+            <ProfileScreen
+              hygieneScore={hygieneScore}
+              streak={streak}
+              onReset={() => {
+                setHabits(emptyHabits());
+                setStreak(0);
+                setLastCompleted("");
+                localStorage.clear();
+              }}
+            />
+          )}
+
+          <BottomNav screen={screen} setScreen={setScreen} />
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function StatusBar() {
+  return (
+    <div className="status-bar" aria-hidden="true">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+  );
+}
+
+function HomeScreen({
+  hygieneScore,
+  habits,
+  streak,
+  setScreen,
+  completeDay,
+  lastCompleted,
+  allHabitsDone,
+}: {
+  hygieneScore: number;
+  habits: Record<HabitKey, boolean>;
+  streak: number;
+  setScreen: (screen: Screen) => void;
+  completeDay: () => void;
+  lastCompleted: string;
+  allHabitsDone: boolean;
+}) {
+  return (
+    <div className="screen-content home-view">
+      <header className="home-top">
+        <button aria-label="Menu" className="icon-button menu-icon" type="button">
+          <span />
+        </button>
+        <Image src="/logo.png" alt="YoMeCepillo.cl" width={190} height={80} priority />
+        <button aria-label="Notificaciones" className="icon-button bell-icon" type="button">
+          <span />
         </button>
       </header>
 
-      <section className="hero">
-        <div className="sparkles" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
+      <div className="hello-block">
+        <h1>Hola, Ana!</h1>
+        <p>Lista para cuidar tu sonrisa hoy</p>
+      </div>
 
-        <div className="hero-copy">
-          <p className="kicker">Aprende jugando a cuidar tu sonrisa</p>
-          <h1>
-            Aprende a <span>Cepillarte</span>
-            <small>
-              como un <b>Experto</b>
-            </small>
-          </h1>
-          <p className="hero-description">
-            Unete a los mas secos del cepillado. Aprende jugando a cuidar tus
-            dientes y recibe un reporte de tu higiene.
-          </p>
-          <button className="pill-button hero-cta" onClick={() => openTool("evaluacion")} type="button">
-            &iquest;Cuan Bien te Cepillas?
-            <span aria-hidden="true">&rsaquo;</span>
+      <section className="score-card">
+        <span>Tu higiene hoy</span>
+        <div className="score-circle">
+          <strong>{hygieneScore}%</strong>
+          <small>{hygieneScore >= 80 ? "Muy bien!" : "Vamos!"}</small>
+        </div>
+      </section>
+
+      <div className="habit-shortcuts">
+        <button className="mini-habit" onClick={() => setScreen("brush")} type="button">
+          <span className="habit-illustration brush-small" />
+          <strong>Cepillado</strong>
+          <small>2 veces al dia</small>
+          <i className={habits.brushMorning && habits.brushNight ? "check active" : "check"} />
+        </button>
+        <button className="mini-habit" onClick={() => setScreen("floss")} type="button">
+          <span className="habit-illustration floss-small" />
+          <strong>Hilo dental</strong>
+          <small>1 vez al dia</small>
+          <i className={habits.floss ? "check active" : "check"} />
+        </button>
+      </div>
+
+      <section className="streak-panel">
+        <div>
+          <span>Racha actual</span>
+          <strong>{streak} dias</strong>
+          <p>Sigue asi!</p>
+        </div>
+        <div className="tiny-tooth" aria-hidden="true" />
+      </section>
+
+      <section className="tip-card">
+        <span className="tip-icon" aria-hidden="true" />
+        <div>
+          <strong>Consejo del dia</strong>
+          <p>Usar hilo dental previene caries entre los dientes.</p>
+        </div>
+      </section>
+
+      <button
+        className="primary-action"
+        disabled={!allHabitsDone || lastCompleted === todayKey()}
+        onClick={completeDay}
+        type="button"
+      >
+        Registrar dia completo
+      </button>
+    </div>
+  );
+}
+
+function BrushScreen({
+  seconds,
+  isRunning,
+  segment,
+  onToggle,
+  onReset,
+}: {
+  seconds: number;
+  isRunning: boolean;
+  segment: number;
+  onToggle: () => void;
+  onReset: () => void;
+}) {
+  const zones = ["Superior izquierda", "Superior derecha", "Inferior derecha", "Inferior izquierda"];
+
+  return (
+    <div className="screen-content brush-view">
+      <header className="simple-title">
+        <h1>Cepillado</h1>
+        <p>Vamos a cepillarnos!</p>
+      </header>
+
+      <div className="timer-display">
+        <strong>{formatTime(seconds)}</strong>
+        <span>Tiempo restante</span>
+      </div>
+
+      <div className="mouth-stage" aria-label="Zonas de cepillado">
+        <div className="mouth">
+          {zones.map((zone, index) => (
+            <span className={index === segment ? "zone active" : "zone"} key={zone} />
+          ))}
+          <button className="pause-button" onClick={onToggle} type="button">
+            {isRunning ? "Pausa" : "Iniciar"}
           </button>
         </div>
+      </div>
 
-        <div className="hero-art" aria-label="Diente feliz con cepillo dental">
-          <div className="speech-bubble">
-            <strong>&iexcl;Hola! Soy Ceps</strong> y voy a
-            <span> ensenarte a cuidar tus dientes</span>
-          </div>
-          <Image
-            src="/assets/tooth-hero.png"
-            alt="Mascota diente feliz sosteniendo un cepillo de dientes azul"
-            width={720}
-            height={720}
-            priority
-          />
-        </div>
+      <p className="brush-instruction">Cepilla suavemente cada zona.</p>
+
+      <div className="zone-list">
+        {zones.map((zone, index) => (
+          <span className={index === segment ? "active" : ""} key={zone}>
+            {zone}
+          </span>
+        ))}
+      </div>
+
+      <section className="soft-note">
+        <strong>Consejo</strong>
+        <p>Inclina el cepillo 45 grados hacia la encia y realiza movimientos circulares suaves.</p>
       </section>
 
-      <section className="features" id="evaluacion" aria-labelledby="features-title">
-        <h2 id="features-title">Lo que puedes hacer</h2>
-        <div className="feature-grid">
-          {features.map((feature) => (
-            <article className={`feature-card ${feature.accent}`} key={feature.title}>
-              <h3>{feature.title}</h3>
-              <div className={`feature-visual ${feature.visual}`} aria-hidden="true">
-                <span />
-              </div>
-              <p>{feature.body}</p>
-              <button className="feature-action" onClick={() => openTool(feature.id)} type="button">
-                {feature.action}
-              </button>
+      <button className="secondary-action" onClick={onReset} type="button">
+        Reiniciar temporizador
+      </button>
+    </div>
+  );
+}
+
+function FlossScreen({ flossDone, onDone }: { flossDone: boolean; onDone: () => void }) {
+  return (
+    <div className="screen-content floss-view">
+      <header className="simple-title left">
+        <h1>Usa hilo dental todos los dias</h1>
+        <p>El cepillo no limpia entre los dientes.</p>
+      </header>
+
+      <div className="floss-hero" aria-hidden="true">
+        <div className="gum" />
+        <div className="teeth-row">
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="floss-line" />
+      </div>
+
+      <div className="floss-steps">
+        {["Toma el hilo con ambos dedos", "Deslizalo suavemente", "Haz forma de C y limpia"].map(
+          (step, index) => (
+            <article key={step}>
+              <span>{index + 1}</span>
+              <div className="hand-icon" />
+              <p>{step}</p>
             </article>
-          ))}
-        </div>
+          ),
+        )}
+      </div>
 
-        <button className="start-button" onClick={() => openTool("guia")} type="button">
-          &iexcl;Vamos a Empezar!
+      <button className="primary-action" onClick={onDone} type="button">
+        {flossDone ? "Hilo dental registrado" : "Registrar que lo hice"}
+      </button>
+
+      <section className="soft-note">
+        <strong>Sabias que?</strong>
+        <p>Usar hilo dental a diario puede prevenir gingivitis y mal aliento.</p>
+      </section>
+    </div>
+  );
+}
+
+function HabitsScreen({
+  answer,
+  onAnswer,
+  onNext,
+}: {
+  answer: number;
+  onAnswer: (answer: number) => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="screen-content habits-view">
+      <header className="question-header">
+        <span>Mis habitos</span>
+        <small>1/6</small>
+      </header>
+
+      <h1>{habitQuestion.question}</h1>
+
+      <div className="answer-list">
+        {habitQuestion.options.map((option, index) => (
+          <button
+            className={answer === index ? "selected" : ""}
+            key={option}
+            onClick={() => onAnswer(index)}
+            type="button"
+          >
+            <span className="answer-icon" />
+            {option}
+            <i />
+          </button>
+        ))}
+      </div>
+
+      <div className="mascot-card">
+        <div className="tiny-tooth large" aria-hidden="true" />
+      </div>
+
+      <button className="primary-action" onClick={onNext} type="button">
+        Siguiente
+      </button>
+    </div>
+  );
+}
+
+function ProgressScreen({
+  weeklyScore,
+  streak,
+  habits,
+  setScreen,
+}: {
+  weeklyScore: number;
+  streak: number;
+  habits: Record<HabitKey, boolean>;
+  setScreen: (screen: Screen) => void;
+}) {
+  return (
+    <div className="screen-content progress-view">
+      <header className="screen-title-row">
+        <h1>Mi progreso</h1>
+        <button className="calendar-button" type="button">Cal</button>
+      </header>
+
+      <div className="segmented-control">
+        <button className="active" type="button">Semana</button>
+        <button type="button">Mes</button>
+        <button type="button">Total</button>
+      </div>
+
+      <p className="date-range">13 - 19 de mayo</p>
+
+      <section className="weekly-card">
+        <div>
+          <span>Puntuacion semanal</span>
+          <strong>{weeklyScore}%</strong>
+          <p>Excelente trabajo!</p>
+        </div>
+        <div className="trophy" aria-hidden="true" />
+      </section>
+
+      <section className="summary-list">
+        <h2>Resumen</h2>
+        <ProgressRow label="Cepillado" value={habits.brushMorning && habits.brushNight ? "14 / 14 veces" : "En progreso"} />
+        <ProgressRow label="Hilo dental" value={habits.floss ? "6 / 7 veces" : "Pendiente"} />
+        <ProgressRow label="Racha actual" value={`${streak} dias`} />
+      </section>
+
+      <section className="badges">
+        <h2>Insignias recientes</h2>
+        <div>
+          <button onClick={() => setScreen("brush")} type="button">7 dias cepillado</button>
+          <button onClick={() => setScreen("floss")} type="button">Hilo dental constante</button>
+          <button onClick={() => setScreen("learn")} type="button">Encias saludables</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ProgressRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="progress-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <i />
+    </div>
+  );
+}
+
+function LearnScreen() {
+  return (
+    <div className="screen-content learn-view">
+      <header className="simple-title">
+        <h1>Aprender</h1>
+        <p>Cuida tu boca, previene problemas.</p>
+      </header>
+
+      <div className="learning-tabs">
+        <button className="active" type="button">Todo</button>
+        <button type="button">Cepillado</button>
+        <button type="button">Hilo dental</button>
+        <button type="button">Encias</button>
+      </div>
+
+      <div className="lesson-list">
+        {lessonCards.map((lesson) => (
+          <article className={`lesson-card ${lesson.accent}`} key={lesson.title}>
+            <div>
+              <h2>{lesson.title}</h2>
+              <span>{lesson.time}</span>
+            </div>
+            <div className="lesson-image" aria-hidden="true">
+              <span />
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({
+  hygieneScore,
+  streak,
+  onReset,
+}: {
+  hygieneScore: number;
+  streak: number;
+  onReset: () => void;
+}) {
+  return (
+    <div className="screen-content profile-view">
+      <div className="profile-card">
+        <div className="tiny-tooth large" aria-hidden="true" />
+        <h1>Ana</h1>
+        <p>Cuidadora de sonrisas</p>
+      </div>
+
+      <div className="profile-stats">
+        <span>
+          <strong>{hygieneScore}%</strong>
+          higiene
+        </span>
+        <span>
+          <strong>{streak}</strong>
+          racha
+        </span>
+      </div>
+
+      <button className="secondary-action" onClick={onReset} type="button">
+        Reiniciar progreso local
+      </button>
+    </div>
+  );
+}
+
+function BottomNav({
+  screen,
+  setScreen,
+}: {
+  screen: Screen;
+  setScreen: (screen: Screen) => void;
+}) {
+  const items: Array<{ screen: Screen; label: string; icon: string }> = [
+    { screen: "home", label: "Inicio", icon: "home" },
+    { screen: "progress", label: "Progreso", icon: "bars" },
+    { screen: "brush", label: "Cepillar", icon: "plus" },
+    { screen: "learn", label: "Aprender", icon: "book" },
+    { screen: "profile", label: "Perfil", icon: "user" },
+  ];
+
+  return (
+    <nav className="bottom-nav" aria-label="Navegacion de la app">
+      {items.map((item) => (
+        <button
+          className={`${screen === item.screen ? "active" : ""} ${item.icon === "plus" ? "center-action" : ""}`}
+          key={item.screen}
+          onClick={() => setScreen(item.screen)}
+          type="button"
+        >
+          <span className={`nav-icon ${item.icon}`} aria-hidden="true" />
+          <small>{item.label}</small>
         </button>
-      </section>
-
-      <section className="platform-panel" id="plataforma" aria-label="Plataforma de acompanamiento dental">
-        <div className="panel-heading">
-          <p>Tu companero diario</p>
-          <h2>Plan de cepillado y progreso</h2>
-        </div>
-
-        <div className="tool-tabs" role="tablist" aria-label="Herramientas">
-          {features.map((feature) => (
-            <button
-              aria-selected={activeTool === feature.id}
-              className={activeTool === feature.id ? "selected" : ""}
-              key={feature.id}
-              onClick={() => setActiveTool(feature.id)}
-              role="tab"
-              type="button"
-            >
-              {feature.title}
-            </button>
-          ))}
-        </div>
-
-        <div className="tool-surface">
-          {activeTool === "guia" && (
-            <section className="guide-tool" id="guia">
-              <div className="tool-copy">
-                <span className="tool-badge">Tecnica 2 minutos</span>
-                <h3>{brushingSteps[guideStep].title}</h3>
-                <p>{brushingSteps[guideStep].body}</p>
-                <div className="timer-pill">{brushingSteps[guideStep].time}</div>
-                <div className="tool-actions">
-                  <button
-                    disabled={guideStep === 0}
-                    onClick={() => setGuideStep((step) => Math.max(step - 1, 0))}
-                    type="button"
-                  >
-                    Anterior
-                  </button>
-                  <button
-                    onClick={() =>
-                      setGuideStep((step) => Math.min(step + 1, brushingSteps.length - 1))
-                    }
-                    type="button"
-                  >
-                    Siguiente paso
-                  </button>
-                </div>
-              </div>
-
-              <ol className="step-list">
-                {brushingSteps.map((step, index) => (
-                  <li className={index === guideStep ? "current" : ""} key={step.title}>
-                    <button onClick={() => setGuideStep(index)} type="button">
-                      <span>{index + 1}</span>
-                      <strong>{step.title}</strong>
-                      <small>{step.time}</small>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-
-          {activeTool === "evaluacion" && (
-            <section className="quiz-tool">
-              <div className="tool-copy">
-                <span className="tool-badge">Evaluacion rapida</span>
-                <h3>Responde y descubre tu nivel</h3>
-                <p>
-                  Marca una opcion por pregunta. Ceps calculara tu puntaje y te
-                  dara una rutina diaria para mejorar.
-                </p>
-                <div className="score-ring" style={{ "--score": `${quizDone ? currentScore : 0}%` } as CSSProperties}>
-                  <strong>{quizDone ? currentScore : 0}%</strong>
-                  <span>{quizDone ? "completo" : "en curso"}</span>
-                </div>
-              </div>
-
-              <div className="question-list">
-                {quizQuestions.map((item, index) => (
-                  <fieldset key={item.question}>
-                    <legend>
-                      {index + 1}. {item.question}
-                    </legend>
-                    {item.options.map((option, optionIndex) => (
-                      <label
-                        className={answers[index] === optionIndex ? "picked" : ""}
-                        key={option}
-                      >
-                        <input
-                          checked={answers[index] === optionIndex}
-                          name={`question-${index}`}
-                          onChange={() => answerQuestion(index, optionIndex)}
-                          type="radio"
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </fieldset>
-                ))}
-
-                <div className="quiz-actions">
-                  <button onClick={() => setAnswers(emptyAnswers)} type="button">
-                    Reiniciar
-                  </button>
-                  <button disabled={!quizDone} onClick={() => openTool("nivel")} type="button">
-                    Ver mi nivel
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {activeTool === "nivel" && (
-            <section className="level-tool">
-              <div className={`level-card ${level.className}`}>
-                <span>{level.badge}</span>
-                <h3>{level.name}</h3>
-                <strong>{score}%</strong>
-                <p>{level.message}</p>
-              </div>
-
-              <div className="daily-plan">
-                <h3>Que debo hacer diariamente</h3>
-                <ul>
-                  {level.daily.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <button onClick={() => openTool("dashboard")} type="button">
-                  Llevarlo a mi racha
-                </button>
-              </div>
-            </section>
-          )}
-
-          {activeTool === "dashboard" && (
-            <section className="dashboard-tool" id="dashboard">
-              <div className="streak-card">
-                <span>Racha actual</span>
-                <strong>{streak}</strong>
-                <p>{streak === 1 ? "dia seguido" : "dias seguidos"}</p>
-              </div>
-
-              <div className="task-board">
-                <div className="task-board-head">
-                  <div>
-                    <span className="tool-badge">Mision de hoy</span>
-                    <h3>{progress}% completado</h3>
-                  </div>
-                  <div className="progress-track" aria-label={`Progreso ${progress}%`}>
-                    <span style={{ width: `${progress}%` }} />
-                  </div>
-                </div>
-
-                <div className="task-list">
-                  {dailyTasks.map((task, index) => (
-                    <label className={checkedTasks[index] ? "done" : ""} key={task}>
-                      <input
-                        checked={checkedTasks[index]}
-                        onChange={() => toggleTask(index)}
-                        type="checkbox"
-                      />
-                      <span>{task}</span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="dashboard-actions">
-                  <button disabled={!allDoneToday || lastCompleted === todayKey()} onClick={completeDay} type="button">
-                    Completar dia
-                  </button>
-                  <button onClick={resetToday} type="button">
-                    Reiniciar hoy
-                  </button>
-                </div>
-
-                {lastCompleted === todayKey() && (
-                  <p className="success-note">
-                    Mision lista por hoy. Vuelve manana para mantener la racha.
-                  </p>
-                )}
-              </div>
-            </section>
-          )}
-        </div>
-      </section>
-
-      <footer className="footer" id="contacto">
-        <div className="footer-mascot" aria-hidden="true">
-          <span className="thumb" />
-        </div>
-        <div className="footer-main">
-          <a className="footer-brand" href="#inicio">
-            <Image src="/logo.png" alt="YoMeCepillo.cl" width={240} height={101} />
-          </a>
-          <nav aria-label="Navegacion secundaria">
-            {navItems.map((item) => (
-              <a key={item.label} href={item.href} onClick={() => item.tool && setActiveTool(item.tool)}>
-                {item.label}
-              </a>
-            ))}
-          </nav>
-          <div className="socials" aria-label="Redes sociales">
-            <a href="#" aria-label="YouTube">
-              YT
-            </a>
-            <a href="#" aria-label="Instagram">
-              IG
-            </a>
-            <a href="#" aria-label="Facebook">
-              f
-            </a>
-          </div>
-        </div>
-        <p>&copy; 2026 YoMeCepillo.cl &middot; Aprende a cuidar tu sonrisa.</p>
-      </footer>
-    </main>
+      ))}
+    </nav>
   );
 }

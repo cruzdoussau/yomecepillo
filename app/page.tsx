@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 
 type Screen = "home" | "brush" | "interdental" | "learn" | "test" | "progress" | "profile";
 type InterdentalMethodId = "floss" | "picks" | "brushes";
-type VideoId = "bass" | "floss" | "picks" | "interdentalBrush";
+type VideoId = "toothbrushBetweenTeeth" | "floss" | "picks" | "interdentalBrush";
+type VideoCategory = "all" | "brushing" | "floss" | "gums";
 type TestKey = "bleeding" | "braces" | "wideSpaces" | "sensitivity" | "implants";
 
 type StoredState = {
@@ -87,6 +88,8 @@ const videos: Array<{
   duration: string;
   src: string;
   icon: string;
+  category: Exclude<VideoCategory, "all">;
+  description: string;
   questions: Array<{
     question: string;
     options: string[];
@@ -94,57 +97,63 @@ const videos: Array<{
   }>;
 }> = [
   {
-    id: "bass",
-    title: "Técnica Bass Modificada",
-    duration: "2:45 min",
-    src: "/videos/bass-modificada.mp4",
+    id: "toothbrushBetweenTeeth",
+    title: "Cepillado entre los dientes",
+    duration: "Video guia",
+    src: "/videos/como%20pasar%20el%20cepillo%20entre%20los%20dientes.mp4",
     icon: "brush",
+    category: "brushing",
+    description: "Aprende como ubicar el cepillo y limpiar los espacios de forma suave.",
     questions: [
       {
-        question: "¿Cuál es el ángulo correcto del cepillo?",
-        options: ["90°", "45°", "20°"],
+        question: "Que debes evitar al cepillar entre los dientes?",
+        options: ["Movimientos suaves", "Forzar el cepillo", "Avanzar con calma"],
         correct: 1,
       },
       {
-        question: "¿Qué movimiento se realiza?",
-        options: ["Horizontal fuerte", "Vibratorio suave", "Circular rápido"],
-        correct: 1,
+        question: "Como debe sentirse el movimiento?",
+        options: ["Suave y controlado", "Rapido y fuerte", "Con dolor"],
+        correct: 0,
       },
     ],
   },
   {
     id: "floss",
-    title: "Uso de hilo dental",
-    duration: "1:58 min",
-    src: "/videos/hilo-dental.mp4",
+    title: "Hilo dental tradicional",
+    duration: "Video guia",
+    src: "/videos/como%20pasar%20el%20hilo%20dental.mp4",
     icon: "floss",
+    category: "floss",
+    description: "Practica el recorrido del hilo dental para limpiar ambas caras del diente.",
     questions: [
       {
-        question: "¿Qué forma debe hacer el hilo alrededor del diente?",
-        options: ["Forma de C", "Línea recta", "Nudo"],
+        question: "Que forma debe hacer el hilo alrededor del diente?",
+        options: ["Forma de C", "Linea recta", "Nudo"],
         correct: 0,
       },
       {
-        question: "¿Qué debes evitar?",
-        options: ["Entrar suave", "Golpear la encía", "Limpiar ambas caras"],
+        question: "Que debes evitar?",
+        options: ["Entrar suave", "Golpear la encia", "Limpiar ambas caras"],
         correct: 1,
       },
     ],
   },
   {
     id: "picks",
-    title: "Uso de ganchitos de hilo dental",
-    duration: "2:10 min",
-    src: "/videos/ganchitos.mp4",
+    title: "Gancho de hilo dental",
+    duration: "Video guia",
+    src: "/videos/como%20pasar%20el%20gancho%20de%20hilo%20dental.mp4",
     icon: "pick",
+    category: "floss",
+    description: "Alternativa practica para zonas posteriores o para comenzar con hilo dental.",
     questions: [
       {
-        question: "¿Para quién son útiles los ganchitos?",
+        question: "Para quien son utiles los ganchitos?",
         options: ["Principiantes", "Solo dentistas", "Nadie"],
         correct: 0,
       },
       {
-        question: "¿Cómo se introducen?",
+        question: "Como se introducen?",
         options: ["Con fuerza", "Suavemente", "Mordiendo"],
         correct: 1,
       },
@@ -152,23 +161,32 @@ const videos: Array<{
   },
   {
     id: "interdentalBrush",
-    title: "Uso de cepillos interdentales",
-    duration: "2:30 min",
-    src: "/videos/cepillo-interdental.mp4",
+    title: "Cepillo interproximal",
+    duration: "Video guia",
+    src: "/videos/como%20pasar%20cepillo%20interproximal.mp4",
     icon: "interdental",
+    category: "gums",
+    description: "Una tecnica util para cuidar encias y espacios mas amplios sin lastimar.",
     questions: [
       {
-        question: "¿Cuándo ayudan más?",
-        options: ["Espacios amplios", "Dientes pegados sin espacio", "Solo lengua"],
+        question: "Cuando ayuda mas el cepillo interproximal?",
+        options: ["Espacios amplios", "Dientes sin espacio", "Solo lengua"],
         correct: 0,
       },
       {
-        question: "¿Qué debes evitar?",
+        question: "Que debes evitar?",
         options: ["No forzar", "Forzar el cepillo", "Mover suave"],
         correct: 1,
       },
     ],
   },
+];
+
+const videoCategories: Array<{ id: VideoCategory; label: string }> = [
+  { id: "all", label: "Todo" },
+  { id: "brushing", label: "Cepillado" },
+  { id: "floss", label: "Hilo dental" },
+  { id: "gums", label: "Encias" },
 ];
 
 const testQuestions: Array<{ key: TestKey; question: string }> = [
@@ -248,7 +266,8 @@ export default function Home() {
   const [brushSeconds, setBrushSeconds] = useState(120);
   const [brushRunning, setBrushRunning] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<InterdentalMethodId>("floss");
-  const [activeVideo, setActiveVideo] = useState<VideoId>("bass");
+  const [activeVideo, setActiveVideo] = useState<VideoId>("toothbrushBetweenTeeth");
+  const [activeVideoCategory, setActiveVideoCategory] = useState<VideoCategory>("all");
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
 
   const completedDaily = Number(state.brushToday) + Number(state.interdentalToday);
@@ -453,7 +472,9 @@ export default function Home() {
           {screen === "learn" && (
             <LearnScreen
               activeVideo={activeVideo}
+              activeVideoCategory={activeVideoCategory}
               setActiveVideo={setActiveVideo}
+              setActiveVideoCategory={setActiveVideoCategory}
               activeVideoData={activeVideoData}
               completedVideos={state.completedVideos}
               onVideoEnded={completeVideo}
@@ -745,44 +766,77 @@ function InterdentalScreen({
 
 function LearnScreen({
   activeVideo,
+  activeVideoCategory,
   activeVideoData,
   completedVideos,
   quizAnswers,
   setActiveVideo,
+  setActiveVideoCategory,
   onVideoEnded,
   answerQuiz,
 }: {
   activeVideo: VideoId;
+  activeVideoCategory: VideoCategory;
   activeVideoData: (typeof videos)[number];
   completedVideos: VideoId[];
   quizAnswers: Record<string, number>;
   setActiveVideo: (video: VideoId) => void;
+  setActiveVideoCategory: (category: VideoCategory) => void;
   onVideoEnded: (video: VideoId) => void;
   answerQuiz: (video: VideoId, questionIndex: number, optionIndex: number) => void;
 }) {
   const completed = completedVideos.includes(activeVideo);
+  const visibleVideos =
+    activeVideoCategory === "all"
+      ? videos
+      : videos.filter((video) => video.category === activeVideoCategory);
+
+  function selectCategory(category: VideoCategory) {
+    const nextVideo = category === "all" ? videos[0] : videos.find((video) => video.category === category);
+
+    setActiveVideoCategory(category);
+
+    if (nextVideo) {
+      setActiveVideo(nextVideo.id);
+    }
+  }
 
   return (
     <div className="screen-content learn-view">
       <header className="simple-title">
-        <h1>Aprende con videos</h1>
-        <p>Cuida tu boca con explicaciones simples.</p>
+        <h1>Reforzar higiene</h1>
+        <p>Aprende como aplicar cada tecnica paso a paso.</p>
       </header>
 
+      <div className="learning-tabs" aria-label="Filtrar videos por tecnica">
+        {videoCategories.map((category) => (
+          <button
+            className={activeVideoCategory === category.id ? "active" : ""}
+            key={category.id}
+            onClick={() => selectCategory(category.id)}
+            type="button"
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
+
       <div className="lesson-list">
-        {videos.map((video) => (
+        {visibleVideos.map((video) => (
           <button
             className={activeVideo === video.id ? "lesson-card active" : "lesson-card"}
             key={video.id}
             onClick={() => setActiveVideo(video.id)}
             type="button"
           >
-            <span className={`lesson-icon ${video.icon}`} aria-hidden="true" />
             <div>
               <strong>{video.title}</strong>
-              <small>{video.duration}</small>
+              <small>{video.description}</small>
+              <i>{completedVideos.includes(video.id) ? "Listo" : "Ver"}</i>
             </div>
-            <i>{completedVideos.includes(video.id) ? "Listo" : "Ver"}</i>
+            <span className="lesson-preview" aria-hidden="true">
+              <video muted playsInline preload="metadata" src={`${video.src}#t=0.1`} />
+            </span>
           </button>
         ))}
       </div>
@@ -794,6 +848,7 @@ function LearnScreen({
         </div>
         <video
           controls
+          key={activeVideoData.src}
           onEnded={() => onVideoEnded(activeVideoData.id)}
           poster="/assets/tooth-hero.png"
           src={activeVideoData.src}

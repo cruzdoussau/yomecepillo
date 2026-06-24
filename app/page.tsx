@@ -18,6 +18,7 @@ type StoredState = {
   brushToday: boolean;
   interdentalToday: boolean;
   completedVideos: VideoId[];
+  completedQuizzes: VideoId[];
   badges: string[];
   testAnswers: Record<TestKey, boolean>;
 };
@@ -101,20 +102,20 @@ const videos: Array<{
   {
     id: "toothbrushBetweenTeeth",
     title: "Cepillado entre los dientes",
-    duration: "Video guia",
+    duration: "Video guía",
     src: "/videos/como%20pasar%20el%20cepillo%20entre%20los%20dientes.mp4",
     icon: "brush",
     category: "brushing",
-    description: "Aprende como ubicar el cepillo y limpiar los espacios de forma suave.",
+    description: "Aprende cómo ubicar el cepillo y limpiar los espacios de forma suave.",
     questions: [
       {
-        question: "Que debes evitar al cepillar entre los dientes?",
+        question: "¿Qué debes evitar al cepillar entre los dientes?",
         options: ["Movimientos suaves", "Forzar el cepillo", "Avanzar con calma"],
         correct: 1,
       },
       {
-        question: "Como debe sentirse el movimiento?",
-        options: ["Suave y controlado", "Rapido y fuerte", "Con dolor"],
+        question: "¿Cómo debe sentirse el movimiento?",
+        options: ["Suave y controlado", "Rápido y fuerte", "Con dolor"],
         correct: 0,
       },
     ],
@@ -122,20 +123,20 @@ const videos: Array<{
   {
     id: "floss",
     title: "Hilo dental tradicional",
-    duration: "Video guia",
+    duration: "Video guía",
     src: "/videos/como%20pasar%20el%20hilo%20dental.mp4",
     icon: "floss",
     category: "floss",
     description: "Practica el recorrido del hilo dental para limpiar ambas caras del diente.",
     questions: [
       {
-        question: "Que forma debe hacer el hilo alrededor del diente?",
-        options: ["Forma de C", "Linea recta", "Nudo"],
+        question: "¿Qué forma debe hacer el hilo alrededor del diente?",
+        options: ["Forma de C", "Línea recta", "Nudo"],
         correct: 0,
       },
       {
-        question: "Que debes evitar?",
-        options: ["Entrar suave", "Golpear la encia", "Limpiar ambas caras"],
+        question: "¿Qué debes evitar?",
+        options: ["Entrar suave", "Golpear la encía", "Limpiar ambas caras"],
         correct: 1,
       },
     ],
@@ -143,19 +144,19 @@ const videos: Array<{
   {
     id: "picks",
     title: "Gancho de hilo dental",
-    duration: "Video guia",
+    duration: "Video guía",
     src: "/videos/como%20pasar%20el%20gancho%20de%20hilo%20dental.mp4",
     icon: "pick",
     category: "floss",
-    description: "Alternativa practica para zonas posteriores o para comenzar con hilo dental.",
+    description: "Alternativa práctica para zonas posteriores o para comenzar con hilo dental.",
     questions: [
       {
-        question: "Para quien son utiles los ganchitos?",
+        question: "¿Para quién son útiles los ganchitos?",
         options: ["Principiantes", "Solo dentistas", "Nadie"],
         correct: 0,
       },
       {
-        question: "Como se introducen?",
+        question: "¿Cómo se introducen?",
         options: ["Con fuerza", "Suavemente", "Mordiendo"],
         correct: 1,
       },
@@ -164,19 +165,19 @@ const videos: Array<{
   {
     id: "interdentalBrush",
     title: "Cepillo interproximal",
-    duration: "Video guia",
+    duration: "Video guía",
     src: "/videos/como%20pasar%20cepillo%20interproximal.mp4",
     icon: "interdental",
     category: "gums",
-    description: "Una tecnica util para cuidar encias y espacios mas amplios sin lastimar.",
+    description: "Una técnica útil para cuidar encías y espacios más amplios sin lastimar.",
     questions: [
       {
-        question: "Cuando ayuda mas el cepillo interproximal?",
+        question: "¿Cuándo ayuda más el cepillo interproximal?",
         options: ["Espacios amplios", "Dientes sin espacio", "Solo lengua"],
         correct: 0,
       },
       {
-        question: "Que debes evitar?",
+        question: "¿Qué debes evitar?",
         options: ["No forzar", "Forzar el cepillo", "Mover suave"],
         correct: 1,
       },
@@ -188,7 +189,7 @@ const videoCategories: Array<{ id: VideoCategory; label: string }> = [
   { id: "all", label: "Todo" },
   { id: "brushing", label: "Cepillado" },
   { id: "floss", label: "Hilo dental" },
-  { id: "gums", label: "Encias" },
+  { id: "gums", label: "Encías" },
 ];
 
 const testQuestions: Array<{ key: TestKey; question: string }> = [
@@ -216,6 +217,7 @@ const initialState: StoredState = {
   brushToday: false,
   interdentalToday: false,
   completedVideos: [],
+  completedQuizzes: [],
   badges: [],
   testAnswers: initialTestAnswers,
 };
@@ -375,16 +377,57 @@ export default function Home() {
     });
   }
 
-  function answerQuiz(videoId: VideoId, questionIndex: number, optionIndex: number) {
+  function selectQuizAnswer(videoId: VideoId, questionIndex: number, optionIndex: number) {
     const key = `${videoId}-${questionIndex}`;
-    const video = videos.find((item) => item.id === videoId);
-    const alreadyAnswered = quizAnswers[key] !== undefined;
-
     setQuizAnswers((current) => ({ ...current, [key]: optionIndex }));
+  }
 
-    if (!alreadyAnswered && video?.questions[questionIndex].correct === optionIndex) {
-      addPoints(15);
+  function resetQuiz(videoId: VideoId) {
+    setQuizAnswers((current) => {
+      const nextAnswers = { ...current };
+      const video = videos.find((item) => item.id === videoId);
+
+      video?.questions.forEach((_, questionIndex) => {
+        delete nextAnswers[`${videoId}-${questionIndex}`];
+      });
+
+      return nextAnswers;
+    });
+  }
+
+  function validateQuiz(videoId: VideoId) {
+    const video = videos.find((item) => item.id === videoId);
+
+    if (!video) {
+      return { complete: false, correctCount: 0, total: 0, awarded: false };
     }
+
+    const isComplete = video.questions.every((_, questionIndex) => quizAnswers[`${videoId}-${questionIndex}`] !== undefined);
+    const correctCount = video.questions.reduce((total, question, questionIndex) => {
+      return total + (quizAnswers[`${videoId}-${questionIndex}`] === question.correct ? 1 : 0);
+    }, 0);
+
+    if (!isComplete) {
+      return { complete: false, correctCount, total: video.questions.length, awarded: false };
+    }
+
+    let awarded = false;
+
+    setState((current) => {
+      if (current.completedQuizzes.includes(videoId) || correctCount === 0) {
+        return current;
+      }
+
+      awarded = true;
+
+      return {
+        ...current,
+        points: current.points + correctCount * 15,
+        completedQuizzes: [...current.completedQuizzes, videoId],
+      };
+    });
+
+    return { complete: true, correctCount, total: video.questions.length, awarded };
   }
 
   function toggleTestAnswer(key: TestKey) {
@@ -487,7 +530,10 @@ export default function Home() {
               completedVideos={state.completedVideos}
               onVideoEnded={completeVideo}
               quizAnswers={quizAnswers}
-              answerQuiz={answerQuiz}
+              selectQuizAnswer={selectQuizAnswer}
+              resetQuiz={resetQuiz}
+              validateQuiz={validateQuiz}
+              completedQuizzes={state.completedQuizzes}
             />
           )}
 
@@ -821,23 +867,37 @@ function LearnScreen({
   activeVideoCategory,
   activeVideoData,
   completedVideos,
+  completedQuizzes,
   quizAnswers,
   setActiveVideo,
   setActiveVideoCategory,
   onVideoEnded,
-  answerQuiz,
+  selectQuizAnswer,
+  resetQuiz,
+  validateQuiz,
 }: {
   activeVideo: VideoId;
   activeVideoCategory: VideoCategory;
   activeVideoData: (typeof videos)[number];
   completedVideos: VideoId[];
+  completedQuizzes: VideoId[];
   quizAnswers: Record<string, number>;
   setActiveVideo: (video: VideoId) => void;
   setActiveVideoCategory: (category: VideoCategory) => void;
   onVideoEnded: (video: VideoId) => void;
-  answerQuiz: (video: VideoId, questionIndex: number, optionIndex: number) => void;
+  selectQuizAnswer: (video: VideoId, questionIndex: number, optionIndex: number) => void;
+  resetQuiz: (video: VideoId) => void;
+  validateQuiz: (video: VideoId) => { complete: boolean; correctCount: number; total: number; awarded: boolean };
 }) {
   const completed = completedVideos.includes(activeVideo);
+  const quizAwarded = completedQuizzes.includes(activeVideo);
+  const [quizResult, setQuizResult] = useState<{
+    videoId: VideoId;
+    complete: boolean;
+    correctCount: number;
+    total: number;
+    awarded: boolean;
+  } | null>(null);
   const visibleVideos =
     activeVideoCategory === "all"
       ? videos
@@ -850,14 +910,29 @@ function LearnScreen({
 
     if (nextVideo) {
       setActiveVideo(nextVideo.id);
+      setQuizResult(null);
     }
+  }
+
+  function handleValidateQuiz() {
+    const result = validateQuiz(activeVideoData.id);
+    setQuizResult({
+      videoId: activeVideoData.id,
+      ...result,
+      awarded: result.complete && result.correctCount > 0 && !quizAwarded,
+    });
+  }
+
+  function handleResetQuiz() {
+    resetQuiz(activeVideoData.id);
+    setQuizResult(null);
   }
 
   return (
     <div className="screen-content learn-view">
       <header className="simple-title">
         <h1>Reforzar higiene</h1>
-        <p>Aprende como aplicar cada tecnica paso a paso.</p>
+        <p>Aprende cómo aplicar cada técnica paso a paso.</p>
       </header>
 
       <div className="learning-tabs" aria-label="Filtrar videos por tecnica">
@@ -878,7 +953,10 @@ function LearnScreen({
           <button
             className={activeVideo === video.id ? "lesson-card active" : "lesson-card"}
             key={video.id}
-            onClick={() => setActiveVideo(video.id)}
+            onClick={() => {
+              setActiveVideo(video.id);
+              setQuizResult(null);
+            }}
             type="button"
           >
             <div>
@@ -906,34 +984,55 @@ function LearnScreen({
           src={activeVideoData.src}
         />
         <p className={completed ? "video-status done" : "video-status"}>
-          {completed ? "Video completado · +25 puntos" : "Al terminar se activará el mini cuestionario."}
+          {completed ? "Video completado · +25 puntos" : "Puedes responder el mini cuestionario cuando quieras."}
         </p>
       </section>
 
-      {completed && (
-        <section className="quiz-panel">
-          <h2>Mini cuestionario</h2>
-          {activeVideoData.questions.map((question, questionIndex) => {
-            const key = `${activeVideoData.id}-${questionIndex}`;
+      <section className="quiz-panel">
+        <h2>Mini cuestionario</h2>
+        {activeVideoData.questions.map((question, questionIndex) => {
+          const key = `${activeVideoData.id}-${questionIndex}`;
 
-            return (
-              <fieldset key={question.question}>
-                <legend>{question.question}</legend>
-                {question.options.map((option, optionIndex) => (
-                  <button
-                    className={quizAnswers[key] === optionIndex ? "picked" : ""}
-                    key={option}
-                    onClick={() => answerQuiz(activeVideoData.id, questionIndex, optionIndex)}
-                    type="button"
-                  >
-                    {option}
-                  </button>
-                ))}
-              </fieldset>
-            );
-          })}
-        </section>
-      )}
+          return (
+            <fieldset key={question.question}>
+              <legend>{question.question}</legend>
+              {question.options.map((option, optionIndex) => (
+                <button
+                  className={quizAnswers[key] === optionIndex ? "picked" : ""}
+                  key={option}
+                  onClick={() => {
+                    selectQuizAnswer(activeVideoData.id, questionIndex, optionIndex);
+                    setQuizResult(null);
+                  }}
+                  type="button"
+                >
+                  {option}
+                </button>
+              ))}
+            </fieldset>
+          );
+        })}
+        {quizResult?.videoId === activeVideoData.id && (
+          <p className={quizResult.complete && quizResult.correctCount === quizResult.total ? "quiz-result success" : "quiz-result"}>
+            {!quizResult.complete
+              ? "Responde todas las preguntas antes de validar."
+              : quizResult.correctCount === quizResult.total
+                ? !quizResult.awarded
+                  ? "Cuestionario validado. Ya ganaste los puntos de esta guía."
+                  : `¡Excelente! Ganaste ${quizResult.correctCount * 15} puntos.`
+                : `Respondiste ${quizResult.correctCount} de ${quizResult.total} correctamente.`}
+          </p>
+        )}
+        {quizResult?.videoId === activeVideoData.id && quizResult.complete && quizResult.correctCount < quizResult.total ? (
+          <button className="quiz-action reset" onClick={handleResetQuiz} type="button">
+            Resetear cuestionario
+          </button>
+        ) : (
+          <button className="quiz-action" onClick={handleValidateQuiz} type="button">
+            Validar respuestas
+          </button>
+        )}
+      </section>
     </div>
   );
 }

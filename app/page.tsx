@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 type Screen = "home" | "brush" | "interdental" | "learn" | "test" | "progress" | "profile";
 type InterdentalMethodId = "floss" | "picks" | "brushes";
@@ -13,6 +13,8 @@ type StoredState = {
   points: number;
   streak: number;
   lastCompleted: string;
+  childName: string;
+  childAge: string;
   brushToday: boolean;
   interdentalToday: boolean;
   completedVideos: VideoId[];
@@ -209,6 +211,8 @@ const initialState: StoredState = {
   points: 0,
   streak: 0,
   lastCompleted: "",
+  childName: "",
+  childAge: "",
   brushToday: false,
   interdentalToday: false,
   completedVideos: [],
@@ -390,6 +394,14 @@ export default function Home() {
     }));
   }
 
+  function saveChildProfile(name: string, age: string) {
+    setState((current) => ({
+      ...current,
+      childName: name.trim(),
+      childAge: age.trim(),
+    }));
+  }
+
   function completeDay() {
     if (!state.brushToday || !state.interdentalToday || state.lastCompleted === todayKey()) {
       return;
@@ -425,11 +437,7 @@ export default function Home() {
         <section className="app-screen">
           <StatusBar />
 
-          {screen !== "home" && (
-            <button className="back-button" onClick={() => setScreen("home")} type="button">
-              Atrás
-            </button>
-          )}
+          {screen !== "home" && <InternalHeader onBack={() => setScreen("home")} />}
 
           {screen === "home" && (
             <HomeScreen
@@ -437,7 +445,7 @@ export default function Home() {
               level={level.name}
               state={state}
               setScreen={setScreen}
-              completeDay={completeDay}
+              saveChildProfile={saveChildProfile}
             />
           )}
 
@@ -509,7 +517,7 @@ export default function Home() {
             />
           )}
 
-          <BottomNav screen={screen} setScreen={setScreen} />
+          {screen !== "home" && <BottomNav screen={screen} setScreen={setScreen} />}
         </section>
       </div>
     </main>
@@ -522,6 +530,17 @@ function StatusBar() {
       <span>9:41</span>
       <span>●●●</span>
     </div>
+  );
+}
+
+function InternalHeader({ onBack }: { onBack: () => void }) {
+  return (
+    <header className="internal-header">
+      <Image src="/logo.png" alt="YoMeCepillo.cl" width={230} height={96} priority />
+      <button className="back-button" onClick={onBack} type="button">
+        Atrás
+      </button>
+    </header>
   );
 }
 
@@ -539,89 +558,122 @@ function HomeScreen({
   level,
   state,
   setScreen,
-  completeDay,
+  saveChildProfile,
 }: {
   hygieneScore: number;
   level: string;
   state: StoredState;
   setScreen: (screen: Screen) => void;
-  completeDay: () => void;
+  saveChildProfile: (name: string, age: string) => void;
 }) {
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [childName, setChildName] = useState(state.childName);
+  const [childAge, setChildAge] = useState(state.childAge);
+  const hasProfile = Boolean(state.childName && state.childAge);
+
+  function submitWelcome(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!childName.trim() || !childAge.trim()) {
+      return;
+    }
+
+    saveChildProfile(childName, childAge);
+    setShowWelcome(false);
+  }
+
   return (
-    <div className="screen-content home-view">
-      <header className="home-top">
-        <button aria-label="Menú" className="icon-button menu-icon" type="button">
-          <span />
-        </button>
-        <Image src="/logo.png" alt="YoMeCepillo.cl" width={190} height={80} priority />
-        <button aria-label="Notificaciones" className="icon-button bell-icon" type="button">
-          <span />
-        </button>
+    <div className="screen-content home-view game-home">
+      <Image
+        alt="Ceps aprende a cepillarte y cuida tu sonrisa"
+        className="game-home-art"
+        fill
+        priority
+        sizes="430px"
+        src="/assets/ceps-home.jpg"
+      />
+      <div className="game-home-overlay" aria-hidden="true" />
+
+      <header className="game-home-header">
+        <Image src="/logo.png" alt="YoMeCepillo.cl" width={270} height={112} priority />
       </header>
 
-      <div className="hello-block">
-        <h1>¡Hola, Ana!</h1>
-        <p>Ceps está listo para cuidar tu sonrisa hoy.</p>
-      </div>
-
-      <CepsGuide message="Completa cepillado y limpieza interdental para subir tu higiene diaria." />
-
-      <section className="score-card">
-        <span>Mi higiene hoy</span>
-        <div className="score-circle">
-          <strong>{hygieneScore}%</strong>
-          <small>{hygieneScore === 100 ? "Excelente" : "Sigue"}</small>
+      <section className="game-home-content" aria-label="Inicio de Ceps">
+        <div className="game-home-stats">
+          <span>{hasProfile ? state.childName : "Nuevo"}</span>
+          <span>{state.points} puntos</span>
+          <span>{level}</span>
         </div>
+
+        {!hasProfile && (
+          <button className="start-game-button" onClick={() => setShowWelcome(true)} type="button">
+            <span>¡Comenzar!</span>
+            <i aria-hidden="true" />
+          </button>
+        )}
+
+        {hasProfile && (
+          <div className="game-home-actions" aria-label="Accesos principales">
+            <button className="game-action aprende" onClick={() => setScreen("learn")} type="button">
+              <span className="game-action-icon" aria-hidden="true" />
+              <strong>Aprende</strong>
+            </button>
+            <button className="game-action cuida" onClick={() => setScreen("brush")} type="button">
+              <span className="game-action-icon" aria-hidden="true" />
+              <strong>Cuida</strong>
+            </button>
+            <button className="game-action juega" onClick={() => setScreen("interdental")} type="button">
+              <span className="game-action-icon" aria-hidden="true" />
+              <strong>Juega</strong>
+            </button>
+            <button className="game-action progresa" onClick={() => setScreen("progress")} type="button">
+              <span className="game-action-icon" aria-hidden="true" />
+              <strong>Progresa</strong>
+            </button>
+          </div>
+        )}
       </section>
 
-      <div className="habit-shortcuts">
-        <button className="mini-habit" onClick={() => setScreen("brush")} type="button">
-          <span className="habit-illustration brush-small" />
-          <strong>Cepillado</strong>
-          <small>{state.brushToday ? "Completado" : "Pendiente"}</small>
-          <i className={state.brushToday ? "check active" : "check"} />
-        </button>
-        <button className="mini-habit" onClick={() => setScreen("interdental")} type="button">
-          <span className="habit-illustration floss-small" />
-          <strong>Limpieza interdental</strong>
-          <small>{state.interdentalToday ? "Completada" : "Pendiente"}</small>
-          <i className={state.interdentalToday ? "check active" : "check"} />
-        </button>
-      </div>
+      {showWelcome && (
+        <div className="welcome-sheet" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+          <form className="welcome-card" onSubmit={submitWelcome}>
+            <div className="welcome-tooth" aria-hidden="true" />
+            <h1 id="welcome-title">Bienvenido a YoMeCepillo</h1>
+            <p>
+              Donde podras cuidar tu higiene oral de forma interactiva. Para continuar, por favor
+              indicanos tu nombre y edad.
+            </p>
 
-      <section className="streak-panel">
-        <div>
-          <span>Racha diaria</span>
-          <strong>{state.streak} días</strong>
-          <p>Nivel actual: {level}</p>
+            <label>
+              Nombre
+              <input
+                autoComplete="given-name"
+                maxLength={24}
+                onChange={(event) => setChildName(event.target.value)}
+                placeholder="Escribe tu nombre"
+                type="text"
+                value={childName}
+              />
+            </label>
+
+            <label>
+              Edad
+              <input
+                inputMode="numeric"
+                maxLength={2}
+                onChange={(event) => setChildAge(event.target.value.replace(/\D/g, ""))}
+                placeholder="Ej: 8"
+                type="text"
+                value={childAge}
+              />
+            </label>
+
+            <button className="welcome-submit" disabled={!childName.trim() || !childAge.trim()} type="submit">
+              Entrar a YoMeCepillo
+            </button>
+          </form>
         </div>
-        <div className="tiny-tooth" aria-hidden="true" />
-      </section>
-
-      <section className="tip-card">
-        <span className="tip-icon" aria-hidden="true" />
-        <div>
-          <strong>Consejo del día</strong>
-          <p>La limpieza interdental ayuda a remover placa donde el cepillo no llega.</p>
-        </div>
-      </section>
-
-      <div className="home-actions">
-        <button className="primary-action" onClick={() => setScreen("brush")} type="button">
-          Comenzar cepillado
-        </button>
-        <button className="secondary-action" onClick={() => setScreen("interdental")} type="button">
-          Registrar limpieza interdental
-        </button>
-        <button
-          className="ghost-action"
-          disabled={!state.brushToday || !state.interdentalToday || state.lastCompleted === todayKey()}
-          onClick={completeDay}
-          type="button"
-        >
-          Cerrar día y sumar racha
-        </button>
-      </div>
+      )}
     </div>
   );
 }
